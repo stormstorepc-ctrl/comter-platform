@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>컴터어때 | 전문 중고 거래 플랫폼</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        body { font-family: 'Pretendard', sans-serif; background-color: #0B0B0D; color: #FFFFFF; }
+        .hero-bg {
+            background: linear-gradient(rgba(11, 11, 13, 0.7), rgba(11, 11, 13, 0.9)), url('https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=1200&q=80');
+            background-size: cover;
+            background-position: center;
+        }
+        .modal { display: none; position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); }
+        .modal-active { display: flex; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- 상단 네비게이션 바 -->
+    <header class="border-b border-gray-800 bg-[#0B0B0D]/90 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-8">
+                <a href="#" onclick="showMainView()" class="text-2xl font-black tracking-tighter text-red-600 cursor-pointer">COMTER<span class="text-white">.</span></a>
+                <nav class="hidden md:flex space-x-6 text-sm font-medium text-gray-300">
+                    <button onclick="openModal('sellModal')" class="hover:text-red-500 transition text-red-500 font-bold">내 부품팔기</button>
+                    <button onclick="openModal('inspectModal')" class="hover:text-red-500 transition">부품 검수</button>
+                    <a href="#repair" class="hover:text-red-500 transition">수리</a>
+                    <button onclick="openModal('buildModal')" class="hover:text-red-500 transition">조립대행</button>
+                    <button onclick="showStoreListView()" class="hover:text-red-500 transition text-gray-200 font-bold">매장찾기</button>
+                </nav>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button class="text-xs bg-gray-800 hover:bg-gray-700 px-3 py-2 rounded-lg transition font-medium">KRW · 한국어</button>
+                <button class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-lg shadow-red-600/30">로그인 / 회원가입</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- [뷰 1] 메인 홈 화면 (이전 완벽한 원본 유지) -->
+    <div id="view-home" class="flex-1 flex flex-col">
+        <!-- 히어로 섹션 및 검색 바 -->
+        <section class="hero-bg py-20 px-6 text-center relative">
+            <div class="max-w-4xl mx-auto">
+                <h1 class="text-3xl md:text-5xl font-black mb-4 tracking-tight">컴퓨터 수리, 조립부터 AI 중고 매입까지</h1>
+                <p class="text-gray-400 text-sm md:text-base mb-10">내 주변 가장 가까운 전문 컴퓨터 매장을 찾아보세요.</p>
+                
+                <div class="bg-[#16161A] border border-gray-800 p-3 rounded-2xl shadow-2xl grid grid-cols-1 md:grid-cols-4 gap-3 text-left">
+                    <div class="p-3 bg-[#0B0B0D] rounded-xl border border-gray-800">
+                        <span class="block text-[10px] text-gray-400 font-bold uppercase mb-1">지역 / 매장 검색</span>
+                        <input type="text" placeholder="예: 대구 달서구, 용산" class="w-full bg-transparent text-xs text-white outline-none">
+                    </div>
+                    <div class="p-3 bg-[#0B0B0D] rounded-xl border border-gray-800">
+                        <span class="block text-[10px] text-gray-400 font-bold uppercase mb-1">서비스 선택</span>
+                        <select class="w-full bg-transparent text-xs text-white outline-none">
+                            <option class="bg-gray-900">전체 서비스</option>
+                            <option class="bg-gray-900">중고 부품 매입/검수</option>
+                            <option class="bg-gray-900">PC 조립 대행</option>
+                            <option class="bg-gray-900">하드웨어 수리</option>
+                        </select>
+                    </div>
+                    <div class="p-3 bg-[#0B0B0D] rounded-xl border border-gray-800">
+                        <span class="block text-[10px] text-gray-400 font-bold uppercase mb-1">정렬 기준</span>
+                        <select class="w-full bg-transparent text-xs text-white outline-none">
+                            <option class="bg-gray-900">현 위치 기준 가까운 순</option>
+                            <option class="bg-gray-900">평점 높은 순</option>
+                            <option class="bg-gray-900">기본 검수비 저렴한 순</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center">
+                        <button onclick="showStoreListView()" class="w-full h-full bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-xl transition shadow-lg shadow-red-600/30 flex items-center justify-center space-x-2 py-3">
+                            <span>검색하기</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 프로모션 카드 섹션 -->
+        <section class="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-[#16161A] border border-gray-800 rounded-2xl p-6 relative overflow-hidden group hover:border-red-600/50 transition cursor-pointer" onclick="openModal('sellModal')">
+                <span class="text-red-500 text-2xl mb-3 block">⚡</span>
+                <h3 class="font-bold text-lg mb-1">AI 중고 부품 자동 견적</h3>
+                <p class="text-xs text-gray-400 mb-4">모델명과 사진 한 장으로 실시간 매입 단가를 확인하세요.</p>
+                <span class="text-xs text-red-500 font-bold">지금 바로 부품 팔기 &rarr;</span>
+            </div>
+            <div class="bg-[#16161A] border border-gray-800 rounded-2xl p-6 relative overflow-hidden group hover:border-red-600/50 transition cursor-pointer" onclick="openModal('inspectModal')">
+                <span class="text-red-500 text-2xl mb-3 block">🛡️</span>
+                <h3 class="font-bold text-lg mb-1">전문가 정밀 검수 보증</h3>
+                <p class="text-xs text-gray-400 mb-4">안심하고 거래할 수 있도록 파트너 매장에서 직접 검수합니다.</p>
+                <span class="text-xs text-red-500 font-bold">검수 서비스 안내 &rarr;</span>
+            </div>
+            <div class="bg-[#16161A] border border-gray-800 rounded-2xl p-6 relative overflow-hidden group hover:border-red-600/50 transition cursor-pointer" onclick="openModal('buildModal')">
+                <span class="text-red-500 text-2xl mb-3 block">💻</span>
+                <h3 class="font-bold text-lg mb-1">프로 마스터 조립 대행</h3>
+                <p class="text-xs text-gray-400 mb-4">완벽한 선정리와 철저한 벤치마크 테스트를 보장합니다.</p>
+                <span class="text-xs text-red-500 font-bold">조립 대행 신청 &rarr;</span>
+            </div>
+        </section>
+
+        <!-- 에어비앤비 스타일 매장 리스트 (메인 하단 원본 영역) -->
+        <section id="stores" class="max-w-7xl mx-auto px-6 pb-20">
+            <h2 class="text-xl font-bold mb-6 flex items-center space-x-2">
+                <span>내 주변 추천 컴퓨터 매장</span>
+                <span class="text-xs bg-red-600/20 text-red-500 px-2 py-0.5 rounded font-bold">GPS 기준</span>
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-[#16161A] border border-gray-800 rounded-2xl overflow-hidden hover:border-red-600 transition group">
+                    <div class="h-48 relative overflow-hidden bg-gray-900">
+                        <img src="https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&w=600&q=80" alt="매장 사진" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                        <span class="absolute top-3 left-3 bg-black/70 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full">현 위치에서 1.2km</span>
+                    </div>
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h3 class="font-bold text-base text-white group-hover:text-red-500 transition">스톰 PC (Storm PC)</h3>
+                                <p class="text-xs text-gray-400">대구 달서구 컴퓨터 조립·수리·매입 전문</p>
+                            </div>
+                            <div class="flex items-center space-x-1 bg-gray-900 px-2 py-1 rounded-lg border border-gray-800">
+                                <span class="text-yellow-400 text-xs">★</span>
+                                <span class="text-xs font-bold">4.9</span>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-gray-800 flex justify-between items-center">
+                            <span class="text-xs text-gray-400">기본 검수비</span>
+                            <span class="text-sm font-black text-red-500">₩ 15,000</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-[#16161A] border border-gray-800 rounded-2xl overflow-hidden hover:border-red-600 transition group">
+                    <div class="h-48 relative overflow-hidden bg-gray-900">
+                        <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=600&q=80" alt="매장 사진" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                        <span class="absolute top-3 left-3 bg-black/70 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full">현 위치에서 2.5km</span>
+                    </div>
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h3 class="font-bold text-base text-white group-hover:text-red-500 transition">대구 조립왕 수리센터</h3>
+                                <p class="text-xs text-gray-400">그래픽카드 정밀 테스트 및 출장 수리</p>
+                            </div>
+                            <div class="flex items-center space-x-1 bg-gray-900 px-2 py-1 rounded-lg border border-gray-800">
+                                <span class="text-yellow-400 text-xs">★</span>
+                                <span class="text-xs font-bold">4.8</span>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-gray-800 flex justify-between items-center">
+                            <span class="text-xs text-gray-400">기본 검수비</span>
+                            <span class="text-sm font-black text-red-500">₩ 12,000</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-[#16161A] border border-gray-800 rounded-2xl overflow-hidden hover:border-red-600 transition group">
+                    <div class="h-48 relative overflow-hidden bg-gray-900">
+                        <img src="https://images.unsplash.com/photo-1587202372634-32705e3bf49c?auto=format&fit=crop&w=600&q=80" alt="매장 사진" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                        <span class="absolute top-3 left-3 bg-black/70 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full">현 위치에서 3.1km</span>
+                    </div>
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h3 class="font-bold text-base text-white group-hover:text-red-500 transition">테크스튜디오 랩</h3>
+                                <p class="text-xs text-gray-400">커스텀 수랭 및 하이엔드 부품 거래</p>
+                            </div>
+                            <div class="flex items-center space-x-1 bg-gray-900 px-2 py-1 rounded-lg border border-gray-800">
+                                <span class="text-yellow-400 text-xs">★</span>
+                                <span class="text-xs font-bold">5.0</span>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-gray-800 flex justify-between items-center">
+                            <span class="text-xs text-gray-400">기본 검수비</span>
+                            <span class="text-sm font-black text-red-500">₩ 20,000</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- [뷰 2] 전용 매장 찾기 결과 화면 (매장찾기 클릭 시 전환) -->
+    <div id="view-stores" class="hidden flex-1 max-w-7xl mx-auto px-6 py-8 w-full">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-6 border-b border-gray-800 gap-4">
+            <div>
+                <h1 class="text-2xl font-black">네이버 검색 기준: 컴퓨터 조립 / 수리 매장</h1>
+                <p class="text-xs text-gray-400 mt-1">고객 평가(평점) 순위 및 현 위치에서 가장 가까운 순으로 자동 매칭되었습니다.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-xs bg-gray-800 px-3 py-2 rounded-xl text-gray-300">검색 결과: 3개 매장</span>
+                <select class="bg-[#16161A] border border-gray-700 text-xs text-white px-3 py-2 rounded-xl outline-none">
+                    <option>정렬 기준: 평점 + 거리순</option>
+                    <option>기본 검수비 저렴한 순</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div class="lg:col-span-1 bg-[#16161A] border border-gray-800 rounded-3xl p-4 h-fit sticky top-28 space-y-4">
+                <div class="h-48 bg-gray-900 rounded-2xl relative overflow-hidden flex items-center justify-center border border-gray-800">
+                    <div class="absolute inset-0 opacity-40 bg-[radial-gradient(#ff2a2a_1px,transparent_1px)] [background-size:16px_16px]"></div>
+                    <span class="text-xs font-bold text-red-500 bg-black/80 px-3 py-1.5 rounded-full border border-red-500/30">📍 실시간 지도 연동중</span>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm mb-2 text-gray-200">매장 이름으로 검색</h3>
+                    <div class="flex items-center bg-[#0B0B0D] border border-gray-800 rounded-xl px-3 py-2">
+                        <span class="text-gray-500 mr-2 text-xs">🔍</span>
+                        <input type="text" placeholder="예: 스톰 PC" class="bg-transparent text-xs text-white outline-none w-full">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 평점순 및 거리순 자동 정렬된 매장 리스트 -->
+            <div class="lg:col-span-3 space-y-6">
+                <!-- 매장 1 (평점 5.0, 3.1km) -->
+                <div class="bg-[#16161A] border border-gray-800 rounded-3xl overflow-hidden hover:border-red-500/50 transition flex flex-col md:flex-row shadow-xl">
+                    <div class="md:w-72 h-56 relative overflow-hidden bg-gray-900">
+                        <img src="https://images.unsplash.com/photo-1587202372634-32705e3bf49c?auto=format&fit=crop&w=600&q=80" alt="매장" class="w-full h-full object-cover">
+                        <span class="absolute top-3 left-3 bg-black/80 text-white text-[10px] font-bold px-2.5 py-1 rounded-full border border-white/10">현 위치에서 3.1km</span>
+                    </div>
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="bg-red-600 text-white text-[9px] px-2 py-0.5 rounded font-bold">고객평가 1위</span>
+                                    </div>
+                                    <h3 class="text-lg font-bold text-white">테크스튜디오 랩</h3>
+                                    <p class="text-xs text-gray-400 mt-1">대구 수성구 | 하이엔드 커스텀 수랭 및 중고 부품 거래</p>
+                                </div>
+                                <div class="flex items-center gap-1 bg-[#0B0B0D] px-2.5 py-1 rounded-xl border border-gray-800">
+                                    <span class="text-yellow-400 text-xs">★</span>
+                                    <span class="text-xs font-bold text-white">5.0</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-gray-800 flex justify-between items-center">
+                            <div>
+                                <span class="text-xs text-gray-400">기본 검수비</span>
+                                <p class="text-sm font-black text-red-500">₩ 20,000</p>
+                            </div>
+                            <button onclick="openModal('inspectModal')" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition shadow-md">
+                                매장 예약하기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 매장 2 (평점 4.9, 1.2km) -->
+                <div class="bg-[#16161A] border border-gray-800 rounded-3xl overflow-hidden hover:border-red-500/50 transition flex flex-col md:flex-row shadow-xl">
+                    <div class="md:w-72 h-56 relative overflow-hidden bg-gray-900">
+                        <img src="https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&w=600&q=80" alt="매장" class="w-full h-full object-cover">
+                        <span class="absolute top-3 left-3 bg-black/80 text-white text-[10px] font-bold px-2.5 py-1 rounded-full border border-white/10">현 위치에서 1.2km (가장 가까움)</span>
+                    </div>
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="bg-blue-600 text-white text-[9px] px-2 py-0.5 rounded font-bold">최단 거리</span>
+                                    </div>
+                                    <h3 class="text-lg font-bold text-white">스톰 PC (Storm PC)</h3>
+                                    <p class="text-xs text-gray-400 mt-1">대구 달서구 | 컴퓨터 조립, 수리, 하이엔드 튜닝 전문</p>
+                                </div>
+                                <div class="flex items-center gap-1 bg-[#0B0B0D] px-2.5 py-1 rounded-xl border border-gray-800">
+                                    <span class="text-yellow-400 text-xs">★</span>
+                                    <span class="text-xs font-bold text-white">4.9</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-gray-800 flex justify-between items-center">
+                            <div>
+                                <span class="text-xs text-gray-400">기본 검수비</span>
+                                <p class="text-sm font-black text-red-500">₩ 15,000</p>
+                            </div>
+                            <button onclick="openModal('inspectModal')" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition shadow-md">
+                                매장 예약하기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 매장 3 (평점 4.8, 2.5km) -->
+                <div class="bg-[#16161A] border border-gray-800 rounded-3xl overflow-hidden hover:border-red-500/50 transition flex flex-col md:flex-row shadow-xl">
+                    <div class="md:w-72 h-56 relative overflow-hidden bg-gray-900">
+                        <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=600&q=80" alt="매장" class="w-full h-full object-cover">
+                        <span class="absolute top-3 left-3 bg-black/80 text-white text-[10px] font-bold px-2.5 py-1 rounded-full border border-white/10">현 위치에서 2.5km</span>
+                    </div>
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="text-lg font-bold text-white">대구 조립왕 수리센터</h3>
+                                    <p class="text-xs text-gray-400 mt-1">대구 중구 | 그래픽카드 수리 및 출장 조립 전문</p>
+                                </div>
+                                <div class="flex items-center gap-1 bg-[#0B0B0D] px-2.5 py-1 rounded-xl border border-gray-800">
+                                    <span class="text-yellow-400 text-xs">★</span>
+                                    <span class="text-xs font-bold text-white">4.8</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-gray-800 flex justify-between items-center">
+                            <div>
+                                <span class="text-xs text-gray-400">기본 검수비</span>
+                                <p class="text-sm font-black text-red-500">₩ 12,000</p>
+                            </div>
+                            <button onclick="openModal('inspectModal')" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition shadow-md">
+                                매장 예약하기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- [모달 1] 내 부품팔기 시뮬레이터 -->
+    <div id="sellModal" class="modal">
+        <div class="bg-[#16161A] w-full max-w-lg p-8 rounded-3xl border border-gray-800 m-4 relative shadow-2xl">
+            <button onclick="closeModal('sellModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">✕</button>
+            <h2 class="text-xl font-black mb-2 text-red-500">컴터어때 하이엔드 중고 부품 자동 매입</h2>
+            <p class="text-xs text-gray-400 mb-6">모델명 입력과 사진 업로드로 실시간 매입가를 확인하세요.</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1 font-bold">부품 모델명</label>
+                    <input type="text" id="partModel" placeholder="예: RTX 4090 또는 i7-13700K" class="w-full bg-[#0B0B0D] p-3 rounded-xl border border-gray-700 text-xs text-white outline-none focus:border-red-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1 font-bold">부품 실물 사진</label>
+                    <div class="border-2 border-dashed border-gray-700 p-6 text-center rounded-xl text-gray-500 cursor-pointer hover:border-red-500 transition text-xs">
+                        사진을 여기에 드래그하거나 클릭하여 업로드
+                    </div>
+                </div>
+                <button onclick="runSimulation()" class="w-full bg-red-600 p-3.5 rounded-xl font-bold hover:bg-red-700 transition text-sm shadow-lg shadow-red-600/30">
+                    매입가 견적 산출하기
+                </button>
+                <div id="priceResult" class="hidden text-center pt-4 border-t border-gray-800">
+                    <p class="text-gray-400 text-xs">산출된 예상 매입 단가</p>
+                    <p class="text-2xl font-black text-red-500 mt-1">₩ 890,000</p>
+                    <p class="text-[10px] text-gray-500 mt-1">* 파트너 매장 방문 시 최종 검수를 통해 정산됩니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- [모달 2] 부품 검수 가이드 및 체크리스트 -->
+    <div id="inspectModal" class="modal">
+        <div class="bg-[#16161A] w-full max-w-lg p-8 rounded-3xl border border-gray-800 m-4 relative shadow-2xl">
+            <button onclick="closeModal('inspectModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">✕</button>
+            <h2 class="text-xl font-black mb-2 text-red-500">전문가 파트너 매장 부품 검수 서비스</h2>
+            <p class="text-xs text-gray-400 mb-6">중고 거래 전, 파트너 매장에서 진행하는 필수 정밀 검수 항목입니다.</p>
+            
+            <div class="space-y-3 text-xs">
+                <div class="bg-[#0B0B0D] p-3.5 rounded-xl border border-gray-800 flex items-center justify-between">
+                    <span class="text-gray-300 font-medium">1. 기판 스크래치 및 코어 칩셋 상태 정밀 확인</span>
+                    <span class="text-red-500 font-bold">필수</span>
+                </div>
+                <div class="bg-[#0B0B0D] p-3.5 rounded-xl border border-gray-800 flex items-center justify-between">
+                    <span class="text-gray-300 font-medium">2. 쿨링팬 베어링 소음 및 방열판 부식 점검</span>
+                    <span class="text-red-500 font-bold">필수</span>
+                </div>
+                <div class="bg-[#0B0B0D] p-3.5 rounded-xl border border-gray-800 flex items-center justify-between">
+                    <span class="text-gray-300 font-medium">3. 포트 출력(HDMI / DP) 및 전압 안정성 테스트</span>
+                    <span class="text-red-500 font-bold">정밀</span>
+                </div>
+                <div class="bg-[#0B0B0D] p-3.5 rounded-xl border border-gray-800 flex items-center justify-between">
+                    <span class="text-gray-300 font-medium">4. 벤치마크 부하 테스트 (온도 및 스로틀링 체크)</span>
+                    <span class="text-red-500 font-bold">종합</span>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-gray-800 flex justify-between items-center">
+                <div>
+                    <p class="text-[10px] text-gray-400">표준 기본 검수 비용</p>
+                    <p class="text-sm font-black text-white">₩ 15,000 ~</p>
+                </div>
+                <button onclick="alert('가장 가까운 파트너 매장 검수 예약 페이지로 이동합니다.')" class="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-5 py-3 rounded-xl transition shadow-lg shadow-red-600/30">
+                    검수 예약하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- [모달 3] 프로 마스터 조립 대행 신청 페이지 -->
+    <div id="buildModal" class="modal">
+        <div class="bg-[#16161A] w-full max-w-xl p-8 rounded-3xl border border-gray-800 m-4 relative shadow-2xl max-h-[90vh] overflow-y-auto">
+            <button onclick="closeModal('buildModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">✕</button>
+            <span class="text-xs bg-red-600/20 text-red-500 px-2.5 py-1 rounded-full font-bold">MASTER PRO BUILD</span>
+            <h2 class="text-xl font-black mt-2 mb-1 text-white">프로 전문가 명품 조립 대행 서비스</h2>
+            <p class="text-xs text-gray-400 mb-6">오차 없는 완벽한 선정리와 공랭/수랭 최적화, 꼼꼼한 세팅을 약속드립니다.</p>
+            
+            <div class="space-y-4 text-xs">
+                <!-- 1. 부품 인증 및 박스 수령 옵션 -->
+                <div class="bg-[#0B0B0D] p-4 rounded-xl border border-gray-800 space-y-3">
+                    <label class="block font-bold text-gray-200">1. 부품 인증 및 정품 박스 수령 옵션</label>
+                    <label class="flex items-center justify-between border-b border-gray-800 pb-2 cursor-pointer">
+                        <span class="text-gray-400">조립 전 전체 부품 단체 사진 전송 (+₩0)</span>
+                        <input type="checkbox" id="opt-photo" checked onchange="calculateTotal()" class="accent-red-600 w-4 h-4">
+                    </label>
+                    <label class="flex items-center justify-between pt-1 cursor-pointer">
+                        <span class="text-gray-400">모든 부품 정품 박스 동봉 수령 (+₩10,000)</span>
+                        <input type="checkbox" id="opt-box" checked value="10000" onchange="calculateTotal()" class="accent-red-600 w-4 h-4">
+                    </label>
+                </div>
+
+                <!-- 2. 고성능 써멀 컴파운드 도포 옵션 -->
+                <div class="bg-[#0B0B0D] p-4 rounded-xl border border-gray-800 space-y-2">
+                    <label class="block font-bold text-gray-200">2. 고성능 써멀 컴파운드 도포 옵션</label>
+                    <select id="opt-thermal" onchange="calculateTotal()" class="w-full bg-[#16161A] p-3 rounded-xl border border-gray-700 text-xs text-white outline-none">
+                        <option value="0">기본 제공 써멀 도포 (+₩0)</option>
+                        <option value="15000">최상급 고성능 써멀 (TF7 / MX-6 등) 도포 (+₩15,000)</option>
+                    </select>
+                </div>
+
+                <!-- 3. 추가 팬 옵션 -->
+                <div class="bg-[#0B0B0D] p-4 rounded-xl border border-gray-800 space-y-2">
+                    <label class="block font-bold text-gray-200">3. 쿨링 시스템 및 추가 팬 구성</label>
+                    <select id="opt-fans" onchange="calculateTotal()" class="w-full bg-[#16161A] p-3 rounded-xl border border-gray-700 text-xs text-white outline-none">
+                        <option value="0">기본 케이스 번들 팬 장착 및 연동 (+₩0)</option>
+                        <option value="20000">시스템 쿨링팬 추가 장착 (흡/배기 최적화 +₩20,000)</option>
+                        <option value="50000">하이엔드 감성 RGB 팬 풀세트 교체 + 선정리 패키지 (+₩50,000)</option>
+                    </select>
+                </div>
+
+                <!-- 4. 3DMark 및 정밀 벤치마크 테스트 옵션 -->
+                <div class="bg-[#0B0B0D] p-4 rounded-xl border border-gray-800 space-y-3">
+                    <label class="block font-bold text-gray-200">4. 하드웨어 정밀 벤치마크 테스트</label>
+                    <label class="flex items-center justify-between border-b border-gray-800 pb-2 cursor-pointer">
+                        <span class="text-gray-400">3DMark (TimeSpy / FireStrike) 안정성 검사 (+₩10,000)</span>
+                        <input type="checkbox" id="opt-3dmark" checked value="10000" onchange="calculateTotal()" class="accent-red-600 w-4 h-4">
+                    </label>
+                    <label class="flex items-center justify-between pt-1 cursor-pointer">
+                        <span class="text-gray-400">OCCT CPU/GPU 온도 및 전압 부하 테스트 + 리포트 (+₩10,000)</span>
+                        <input type="checkbox" id="opt-occt" checked value="10000" onchange="calculateTotal()" class="accent-red-600 w-4 h-4">
+                    </label>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-gray-800 flex justify-between items-center">
+                <div>
+                    <p class="text-[10px] text-gray-400">기본 공임비 + 선택 옵션 총합</p>
+                    <p id="total-price" class="text-xl font-black text-red-500">₩ 75,000</p>
+                </div>
+                <button onclick="alert('프로 조립 대행 예약이 접수되었습니다. 완벽한 선정리와 테스트를 거쳐 출고됩니다.')" class="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-6 py-3.5 rounded-xl transition shadow-lg shadow-red-600/30">
+                    조립 대행 신청하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 자바스크립트 화면 전환 및 계산 제어 -->
+    <script>
+        function showStoreListView() {
+            document.getElementById('view-home').classList.add('hidden');
+            document.getElementById('view-stores').classList.remove('hidden');
+            window.scrollTo(0, 0);
+        }
+
+        function showMainView() {
+            document.getElementById('view-stores').classList.add('hidden');
+            document.getElementById('view-home').classList.remove('hidden');
+            window.scrollTo(0, 0);
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('modal-active');
+            if(modalId === 'buildModal') {
+                calculateTotal();
+            }
+        }
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('modal-active');
+        }
+        function runSimulation() {
+            const model = document.getElementById('partModel').value;
+            if(!model) {
+                alert('모델명을 입력해주세요!');
+                return;
+            }
+            document.getElementById('priceResult').classList.remove('hidden');
+        }
+
+        function calculateTotal() {
+            let basePrice = 40000;
+            if(document.getElementById('opt-box').checked) basePrice += parseInt(document.getElementById('opt-box').value);
+            basePrice += parseInt(document.getElementById('opt-thermal').value);
+            basePrice += parseInt(document.getElementById('opt-fans').value);
+            if(document.getElementById('opt-3dmark').checked) basePrice += parseInt(document.getElementById('opt-3dmark').value);
+            if(document.getElementById('opt-occt').checked) basePrice += parseInt(document.getElementById('opt-occt').value);
+            document.getElementById('total-price').innerText = '₩ ' + basePrice.toLocaleString();
+        }
+    </script>
+</body>
+</html>
