@@ -1,0 +1,15 @@
+{
+  "name": "comter-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "컴터어때 - 고객/업체/관리자 플랫폼",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.13.1"
+  }
+}
