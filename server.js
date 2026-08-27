@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
@@ -62,7 +63,16 @@ function adminOnly(req, res, next) {
   next();
 }
 
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'comter.html')));
+app.get('/', (req, res) => {
+  const file = path.join(__dirname, 'comter.html');
+  fs.readFile(file, 'utf8', (err, html) => {
+    if (err) return res.status(500).send('메인 페이지를 불러올 수 없습니다.');
+    const script = '<script src="/comter-ui.js"></script>';
+    if (!html.includes('/comter-ui.js')) html = html.replace('</body>', `${script}</body>`);
+    res.type('html').send(html);
+  });
+});
+
 app.get('/api/health', async (req, res) => {
   try { await dbReady(); res.json({ ok: true, database: true }); }
   catch (e) { res.status(503).json({ ok: false, database: false, error: e.message }); }
@@ -143,14 +153,14 @@ app.patch('/api/admin/shops/:id', auth, adminOnly, async (req, res) => {
     if (!['approved','pending','rejected'].includes(status)) return res.status(400).json({ error: '잘못된 상태입니다.' });
     const r = await pool.query('SELECT user_id FROM shops WHERE id=$1', [req.params.id]);
     if (!r.rowCount) return res.status(404).json({ error: '업체를 찾을 수 없습니다.' });
-    await pool.query('UPDATE shops SET status=$1,approved_at=CASE WHEN $1=\'approved\' THEN NOW() ELSE NULL END WHERE id=$2', [status, req.params.id]);
+    await pool.query("UPDATE shops SET status=$1,approved_at=CASE WHEN $1='approved' THEN NOW() ELSE NULL END WHERE id=$2", [status, req.params.id]);
     await pool.query('UPDATE users SET status=$1 WHERE id=$2', [status === 'approved' ? 'approved' : status, r.rows[0].user_id]);
     res.json({ ok: true });
   } catch { res.status(500).json({ error: '업체 상태 변경 오류' }); }
 });
 
 app.delete('/api/admin/users/:id', auth, adminOnly, async (req, res) => {
-  try { await dbReady(); await pool.query('DELETE FROM users WHERE id=$1 AND role<>\'admin\'', [req.params.id]); res.json({ ok: true }); }
+  try { await dbReady(); await pool.query("DELETE FROM users WHERE id=$1 AND role<>'admin'", [req.params.id]); res.json({ ok: true }); }
   catch { res.status(500).json({ error: '회원 삭제 오류' }); }
 });
 
